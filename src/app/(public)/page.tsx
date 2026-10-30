@@ -2,6 +2,7 @@ import Link from "next/link";
 import { COMPANY, FAQS, LECTURERS, PLANS, SUBJECTS } from "@/lib/content";
 import { subjectCatalogueStats } from "@/lib/engine";
 import { WhatsAppButton } from "@/components/ui";
+import Image from "next/image";
 
 export default function HomePage() {
   const stats = subjectCatalogueStats();
@@ -11,17 +12,29 @@ export default function HomePage() {
   return (
     <>
       {/* 1. Hero */}
-      <section className=" text-white light:text-navy-900">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 lg:grid-cols-2 lg:py-20">
+      <section className="relative overflow-hidden bg-gradient-to-b from-white via-navy-50 to-white text-navy-900 dark:from-navy-800 dark:via-navy-800 dark:to-navy-900 dark:text-white">
+        {/* soft decorative glows */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-gold-500/20 blur-3xl dark:bg-gold-500/10"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-navy-900/10 blur-3xl dark:bg-white/5"
+        />
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 lg:grid-cols-2 lg:py-20">
           <div>
-            <p className="mb-4 inline-flex rounded-full bg-gold-500/15 px-3 py-1 text-sm font-semibold text-gold-500">
+            <p className="mb-4 inline-flex rounded-full bg-gold-500/20 px-3 py-1 text-sm font-semibold text-gold-600 dark:bg-gold-500/15 dark:text-gold-500">
               Built for the JAMB UTME
             </p>
             <h1 className="text-4xl font-black leading-tight sm:text-5xl">
               Reach the score your target course requires —{" "}
-              <span className="text-gold-500">and see the proof.</span>
+              <span className="text-gold-600 dark:text-gold-500">
+                and see the proof.
+              </span>
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/85">
+            <p className="mt-5 max-w-xl text-lg text-neutral-700 dark:text-white/85">
               Video lessons for every syllabus topic, thousands of practice
               questions, full-length CBT mocks that mirror the real exam, and
               analytics that tell you exactly what to fix next.
@@ -32,26 +45,32 @@ export default function HomePage() {
               </Link>
               <Link
                 href="#how-it-works"
-                className="btn-ghost border-white text-white"
+                className="btn-ghost border-navy-900 text-navy-900 hover:bg-navy-900/5 dark:border-white dark:text-white dark:hover:bg-white/10"
               >
                 See how it works
               </Link>
             </div>
-            <p className="mt-4 text-sm text-white/70">
+            <p className="mt-4 text-sm text-neutral-600 dark:text-white/70">
               No card needed. Works on 3G and entry-level phones.
             </p>
           </div>
-          <div className="overflow-hidden rounded-2xl bg-navy-900 p-3 ring-1 ring-white/15">
-            <video
-              className="aspect-[4/3] w-full rounded-xl object-cover"
-              src="https://www.pexels.com/download/video/3738599/"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-label="Students preparing for the JAMB UTME"
-            />
+
+          <div className="relative">
+            <div className="rounded-3xl bg-white p-3 shadow-xl shadow-navy-900/10 ring-1 ring-navy-900/10 dark:bg-white/10 dark:shadow-none dark:ring-white/20">
+              <Image
+                src="https://images.pexels.com/photos/11025023/pexels-photo-11025023.jpeg"
+                alt="Students studying for the JAMB UTME"
+                width={960}
+                height={720}
+                priority
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="aspect-[4/3] w-full rounded-2xl object-cover"
+              />
+            </div>
+            {/* floating chip, uses only facts already on your page */}
+            <div className="absolute -bottom-4 left-4 rounded-xl bg-gold-500 px-4 py-2 text-sm font-bold text-navy-900 shadow-lg sm:left-8">
+              180 questions · 120 minutes · scored out of 400
+            </div>
           </div>
         </div>
       </section>

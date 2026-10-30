@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
-import { PrototypeNote } from "@/components/ui";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -78,7 +77,6 @@ export default function SignupPage() {
         ) : null}
         <button type="submit" className="btn-primary w-full">Create account</button>
       </form>
-      <div className="mt-6"><PrototypeNote>Your account lives only in this browser&apos;s localStorage.</PrototypeNote></div>
       <p className="mt-6 text-sm text-neutral-600 dark:text-white/70">
         Already have an account? <Link href="/login" className="font-semibold underline">Log in</Link>
       </p>
