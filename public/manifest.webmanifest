@@ -1,0 +1,18 @@
+{
+  "name": "Test Prep City — JAMB UTME Prep",
+  "short_name": "Test Prep City",
+  "description": "Video lessons, question banks, CBT mocks and analytics for the JAMB UTME.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#000080",
+  "theme_color": "#000080",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/hero-app.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

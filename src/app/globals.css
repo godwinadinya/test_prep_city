@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-navy-900: #000080;
+  --color-navy-800: #0a0a93;
+  --color-navy-600: #2b2ba6;
+  --color-navy-100: #e6e6f5;
+  --color-navy-50: #f3f4fb;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #b8962e;
+  --color-gold-100: #f8efd2;
+  --color-surface-dark: #000033;
+  --color-neutral-50: #f7f8fb;
+  --color-neutral-100: #eef0f6;
+  --color-neutral-200: #dfe2ec;
+  --color-neutral-300: #c6cad9;
+  --color-neutral-400: #9aa0b5;
+  --color-neutral-500: #6f7691;
+  --color-neutral-600: #525a75;
+  --color-neutral-700: #3b4259;
+  --color-neutral-800: #252b3d;
+  --color-neutral-900: #141827;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-white);
+  color: var(--color-neutral-800);
+}
+
+.dark body {
+  background: var(--color-surface-dark);
+  color: #ffffff;
+}
+
+/* Focus visibility for WCAG 2.2 AA */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-gold-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@utility card {
+  border-radius: 1rem;
+  border: 1px solid var(--color-neutral-200);
+  background: #ffffff;
+  padding: 1.25rem;
+}
+
+.dark .card {
+  background: #06063f;
+  border-color: #1b1b66;
+  color: #ffffff;
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.65rem;
+  background: var(--color-gold-500);
+  color: #000080;
+  font-weight: 700;
+  padding: 0.7rem 1.25rem;
+  transition: background 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--color-gold-600);
+}
+
+@utility btn-navy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.65rem;
+  background: var(--color-navy-900);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.7rem 1.25rem;
+  transition: background 0.15s ease;
+}
+.btn-navy:hover {
+  background: var(--color-navy-600);
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.65rem;
+  border: 2px solid var(--color-navy-900);
+  color: var(--color-navy-900);
+  font-weight: 700;
+  padding: 0.62rem 1.2rem;
+}
+.dark .btn-ghost {
+  border-color: var(--color-gold-500);
+  color: var(--color-gold-500);
+}
+
+@utility field {
+  width: 100%;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-neutral-300);
+  background: #ffffff;
+  padding: 0.6rem 0.8rem;
+  color: var(--color-neutral-900);
+}
+.dark .field {
+  background: #06063f;
+  border-color: #272780;
+  color: #ffffff;
+}
