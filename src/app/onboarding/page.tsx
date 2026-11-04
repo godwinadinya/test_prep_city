@@ -14,7 +14,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState({
     phone: "",
     nickname: "",
-    stateName: "Lagos",
+    stateName: "Abuja",
     school: "",
     examYear: String(new Date().getFullYear() + 1),
     examDate: "",

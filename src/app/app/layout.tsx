@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useStore } from "@/lib/store";
 import { ThemeToggle } from "@/components/ui";
+import { useRouter, usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/app", label: "Home", icon: "🏠" },
@@ -19,6 +19,12 @@ const NAV = [
 export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { state, ready, xp, level, logout } = useStore();
+  const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/app"
+      ? pathname === "/app"
+      : pathname === href || pathname.startsWith(href + "/");
 
   useEffect(() => {
     if (!ready) return;
@@ -28,10 +34,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, [ready, state.user, state.profile.onboardingComplete, router]);
 
   if (!ready || !state.user || !state.profile.onboardingComplete) {
-    return <div className="grid min-h-screen place-items-center text-sm text-neutral-500">Loading your dashboard…</div>;
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-neutral-500">
+        Loading your dashboard…
+      </div>
+    );
   }
 
-  const planName = state.planCode === "free" ? "Free" : state.planCode === "monthly" ? "Monthly" : "Yearly";
+  const planName =
+    state.planCode === "free"
+      ? "Free"
+      : state.planCode === "monthly"
+        ? "Monthly"
+        : "Yearly";
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-surface-dark">
@@ -44,7 +59,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="hidden rounded-full bg-white/10 px-3 py-1 font-semibold sm:inline">
               ⚡ {xp.toLocaleString()} XP · Lv {level.level} {level.tier}
             </span>
-            <span className={"rounded-full px-3 py-1 text-xs font-bold " + (state.planCode !== "free" ? "bg-gold-500 text-navy-900" : "bg-white/15")}>
+            <span
+              className={
+                "rounded-full px-3 py-1 text-xs font-bold " +
+                (state.planCode !== "free"
+                  ? "bg-gold-500 text-navy-900"
+                  : "bg-white/15")
+              }
+            >
               {planName}
             </span>
             <ThemeToggle />
@@ -63,30 +85,62 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
-        <nav aria-label="Student sections" className="hidden w-60 shrink-0 lg:block">
+        <nav
+          aria-label="Student sections"
+          className="hidden w-60 shrink-0 lg:block"
+        >
           <ul className="sticky top-24 space-y-1">
-            {NAV.map((n) => (
-              <li key={n.href}>
-                <Link href={n.href} className="flex items-center gap-3 rounded-xl px-3 py-2.5 font-semibold text-navy-900 hover:bg-navy-100 dark:text-white dark:hover:bg-navy-900">
-                  <span aria-hidden>{n.icon}</span> {n.label}
-                </Link>
-              </li>
-            ))}
+            {NAV.map((n) => {
+              const active = isActive(n.href);
+              return (
+                <li key={n.href}>
+                  <Link
+                    href={n.href}
+                    aria-current={active ? "page" : undefined}
+                    className={
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 font-semibold transition-colors " +
+                      (active
+                        ? "bg-navy-900 text-white dark:bg-gold-500 dark:text-navy-900"
+                        : "text-navy-900 hover:bg-navy-100 dark:text-white dark:hover:bg-navy-900")
+                    }
+                  >
+                    <span aria-hidden>{n.icon}</span> {n.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
-        <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-6">{children}</main>
+        <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-6">
+          {children}
+        </main>
       </div>
 
       <nav
         aria-label="Student sections mobile"
         className="fixed bottom-0 left-0 right-0 z-40 flex justify-around border-t border-neutral-200 bg-white py-1 lg:hidden dark:border-navy-800 dark:bg-navy-900"
       >
-        {NAV.slice(0, 5).map((n) => (
-          <Link key={n.href} href={n.href} className="flex flex-col items-center px-2 py-1 text-[11px] font-semibold text-navy-900 dark:text-white">
-            <span className="text-lg" aria-hidden>{n.icon}</span>
-            {n.label.split(" ")[0]}
-          </Link>
-        ))}
+        {NAV.slice(0, 5).map((n) => {
+          const active = isActive(n.href);
+          return (
+            <Link
+              key={n.href}
+              href={n.href}
+              aria-current={active ? "page" : undefined}
+              className={
+                "flex flex-col items-center rounded-lg px-2 py-1 text-[11px] font-semibold " +
+                (active
+                  ? "bg-navy-900 text-white dark:bg-gold-500 dark:text-navy-900"
+                  : "text-navy-900 dark:text-white")
+              }
+            >
+              <span className="text-lg" aria-hidden>
+                {n.icon}
+              </span>
+              {n.label.split(" ")[0]}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
