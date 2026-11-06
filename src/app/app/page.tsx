@@ -5,6 +5,7 @@ import { COURSE_REQUIREMENTS, lessonById } from "@/lib/content";
 import { predictedScore, studyPlan } from "@/lib/engine";
 import { useStore } from "@/lib/store";
 import { Progress } from "@/components/ui";
+import Leaderboards from "@/components/Leaderboards";
 
 export default function StudentHome() {
   const { state, xp, level, subjects } = useStore();
@@ -146,6 +147,8 @@ export default function StudentHome() {
           </div>
         </section>
       </div>
+
+      <Leaderboards />
     </div>
   );
 }

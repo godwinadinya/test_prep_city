@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { DEMO_LEADERBOARD } from "@/lib/content";
 import { LEVEL_TIERS, XP_RULES } from "@/lib/engine";
 import { useStore } from "@/lib/store";
 import { Progress } from "@/components/ui";
+import Leaderboards from "@/components/Leaderboards";
 
 export default function AchievementsPage() {
   const { state, xp, level, badges } = useStore();
@@ -86,7 +86,9 @@ export default function AchievementsPage() {
         </div>
       </section>
 
-      <section className="card dark:text-white">
+      <Leaderboards />
+
+      {/* <section className="card dark:text-white">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-black text-navy-900 dark:text-white">Leaderboards</h2>
           <div className="flex flex-wrap gap-2 text-sm">
@@ -146,7 +148,7 @@ export default function AchievementsPage() {
           Monday. Suspicious entries are held for integrity review.{" "}
           <Link href="/app/settings" className="underline">Opt out in Settings</Link>
         </p>
-      </section>
+      </section> */}
     </div>
   );
 }

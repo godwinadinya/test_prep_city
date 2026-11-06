@@ -254,7 +254,14 @@ type Store = {
   saveLessonPosition: (lessonId: string, position: number) => void;
   completeLesson: (lessonId: string) => void;
   toggleBookmark: (questionId: string) => void;
-  recordPractice: (answers: { questionId: string; selectedIndex: number; timeMs: number }[]) => { correct: number; xp: number };
+  // recordPractice: (answers: { questionId: string; selectedIndex: number; timeMs: number }[]) => { correct: number; xp: number };
+recordPractice: (
+  answers: {
+    questionId: string;
+    selectedIndex: number | null;
+    timeMs: number;
+  }[]
+) => { correct: number; xp: number };
   startExam: (exam: ExamSession) => void;
   updateExam: (id: string, patch: Partial<ExamSession>) => void;
   submitExam: (id: string, answers: Record<string, number>, flags: Record<string, boolean>) => void;
@@ -411,42 +418,123 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : [...s.bookmarks, questionId],
         })),
 
-      recordPractice: (answers) => {
-        let correct = 0;
-        let xpGain = XP_RULES.session_complete;
-        const now = new Date().toISOString();
-        const newAttempts: Attempt[] = [];
-        setState((s) => {
-          correct = 0;
-          xpGain = XP_RULES.session_complete;
-          newAttempts.length = 0;
-          for (const a of answers) {
-            const q = questionById(a.questionId);
-            if (!q) continue;
-            const isCorrect = q.correctIndex === a.selectedIndex;
-            if (isCorrect) correct += 1;
-            const repeats = s.attempts.filter((x) => x.questionId === q.id).length;
-            if (isCorrect) xpGain += xpForAttempt(q.difficulty, repeats);
-            newAttempts.push({
-              questionId: q.id,
-              topicId: q.topicId,
-              subjectId: q.subjectId,
-              correct: isCorrect,
-              timeMs: Math.max(0, Math.min(a.timeMs, 1_200_000)),
-              at: now,
-              source: "practice",
-            });
-          }
-          return {
-            ...s,
-            attempts: [...s.attempts, ...newAttempts],
-            xpEvents: [...s.xpEvents, { action: "practice_session", amount: xpGain, at: now }],
-            streak: touchStreak(s, answers.length),
-            toast: `Session saved · +${xpGain} XP`,
-          };
-        });
-        return { correct, xp: xpGain };
-      },
+      // recordPractice: (answers) => {
+      //   let correct = 0;
+      //   let xpGain = XP_RULES.session_complete;
+      //   const now = new Date().toISOString();
+      //   const newAttempts: Attempt[] = [];
+      //   setState((s) => {
+      //     correct = 0;
+      //     xpGain = XP_RULES.session_complete;
+      //     newAttempts.length = 0;
+      //     for (const a of answers) {
+      //       const q = questionById(a.questionId);
+      //       if (!q) continue;
+      //       const isCorrect = q.correctIndex === a.selectedIndex;
+      //       if (isCorrect) correct += 1;
+      //       const repeats = s.attempts.filter((x) => x.questionId === q.id).length;
+      //       if (isCorrect) xpGain += xpForAttempt(q.difficulty, repeats);
+      //       newAttempts.push({
+      //         questionId: q.id,
+      //         topicId: q.topicId,
+      //         subjectId: q.subjectId,
+      //         correct: isCorrect,
+      //         timeMs: Math.max(0, Math.min(a.timeMs, 1_200_000)),
+      //         at: now,
+      //         source: "practice",
+      //       });
+      //     }
+      //     return {
+      //       ...s,
+      //       attempts: [...s.attempts, ...newAttempts],
+      //       xpEvents: [...s.xpEvents, { action: "practice_session", amount: xpGain, at: now }],
+      //       streak: touchStreak(s, answers.length),
+      //       toast: `Session saved · +${xpGain} XP`,
+      //     };
+      //   });
+      //   return { correct, xp: xpGain };
+      // },
+
+
+      
+recordPractice: (answers) => {
+  let correct = 0;
+  let xpGain = 0;
+  const now = new Date().toISOString();
+
+  const answeredQuestions = answers.filter(
+    (a) => a.selectedIndex !== null
+  );
+
+  const newAttempts: Attempt[] = [];
+
+  setState((s) => {
+    correct = 0;
+    xpGain =
+      answeredQuestions.length > 0
+        ? XP_RULES.session_complete
+        : 0;
+
+    newAttempts.length = 0;
+
+    for (const a of answeredQuestions) {
+      const q = questionById(a.questionId);
+      if (!q || a.selectedIndex === null) continue;
+
+      const isCorrect = q.correctIndex === a.selectedIndex;
+
+      if (isCorrect) correct += 1;
+
+      const repeats = s.attempts.filter(
+        (x) => x.questionId === q.id
+      ).length;
+
+      if (isCorrect) {
+        xpGain += xpForAttempt(q.difficulty, repeats);
+      }
+
+      newAttempts.push({
+        questionId: q.id,
+        topicId: q.topicId,
+        subjectId: q.subjectId,
+        correct: isCorrect,
+        timeMs: Math.max(
+          0,
+          Math.min(a.timeMs, 1_200_000)
+        ),
+        at: now,
+        source: "practice",
+      });
+    }
+
+    return {
+      ...s,
+      attempts: [...s.attempts, ...newAttempts],
+      xpEvents:
+        xpGain > 0
+          ? [
+              ...s.xpEvents,
+              {
+                action: "practice_session",
+                amount: xpGain,
+                at: now,
+              },
+            ]
+          : s.xpEvents,
+      streak:
+        answeredQuestions.length > 0
+          ? touchStreak(s, answeredQuestions.length)
+          : s.streak,
+      toast:
+        answeredQuestions.length > 0
+          ? `Session saved · +${xpGain} XP`
+          : "Session completed · No answers submitted",
+    };
+  });
+
+  return { correct, xp: xpGain };
+},
+
 
       startExam: (exam) => patch((s) => ({ ...s, exams: [...s.exams, exam] })),
       updateExam: (id, p) => patch((s) => ({ ...s, exams: s.exams.map((e) => (e.id === id ? { ...e, ...p } : e)) })),

@@ -26,7 +26,7 @@ function LessonCenter() {
         <p className="text-sm text-neutral-600 dark:text-white/70">
           Every JAMB syllabus topic has at least one 8–15 minute lecture with captions and a transcript.
         </p>
-      </div>
+      </div> 
 
       <div className="flex flex-wrap gap-2">
         {subjects.map((s) => (

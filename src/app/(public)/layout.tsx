@@ -31,7 +31,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle className="hidden sm:block" />
+            <ThemeToggle className="" />
             <HeaderAuth />
             <MobileMenu phone={COMPANY.phone} />
           </div>
