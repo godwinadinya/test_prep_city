@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { FREE_DAILY_PRACTICE_LIMIT, questionsForTopic, topicsForSubject } from "@/lib/content";
 import { weakTopics } from "@/lib/engine";
-import { useStore } from "@/lib/store";
+import { useStore } from "@/lib/store"; 
 
 function QuestionBank() {
   const params = useSearchParams();

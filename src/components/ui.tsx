@@ -143,7 +143,7 @@ export function MobileMenu({ phone }: { phone: string }) {
               <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3 text-lg hover:bg-navy-600">
                 {l.label}
               </Link>
-            ))}
+            ))} 
           </nav>
           <div className="mt-6 space-y-3">
             <a href={`tel:${phone.replace(/\s/g, "")}`} className="block rounded-lg border border-gold-500 px-3 py-3 text-center font-bold text-gold-500">

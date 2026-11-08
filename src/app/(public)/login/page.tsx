@@ -61,8 +61,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="mt-6"><PrototypeNote>Sign-in is simulated in the browser — no credentials leave this device.</PrototypeNote></div>
-
       <p className="mt-6 text-sm text-neutral-600 dark:text-white/70">
         New here? <Link href="/signup" className="font-semibold underline">Create a free account</Link>
       </p>
