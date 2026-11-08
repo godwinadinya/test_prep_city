@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { SWRConfig } from "swr";
 import { api, ApiError } from "@/lib/api";
+import { clearSession } from "@/lib/auth-storage";
 
 export function AdminProviders({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -15,7 +16,10 @@ export function AdminProviders({ children }: { children: ReactNode }) {
         revalidateOnFocus: false,
         shouldRetryOnError: false,
         onError: (e) => {
-          if (e instanceof ApiError && e.status === 401) router.replace("/login");
+          if (e instanceof ApiError && e.status === 401) {
+            clearSession();
+            router.replace("/login");
+          }
         },
       }}
     >
