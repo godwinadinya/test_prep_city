@@ -1,4 +1,7 @@
-// const BASE = process.env.NEXT_PUBLIC_API_URL ?? ""; // empty = same-origin /api routes
+
+// import { getAccessToken } from "./auth-storage";
+
+// const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
 // export class ApiError extends Error {
 //   constructor(public status: number, message: string, public body?: unknown) {
@@ -6,24 +9,64 @@
 //   }
 // }
 
-// export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-//   const res = await fetch(`${BASE}${path}`, {
-//     ...init,
-//     credentials: "include", // sends the login cookie; remove if you use bearer tokens
-//     headers: { "Content-Type": "application/json", ...init.headers },
-//   });
+// type ApiInit = Omit<RequestInit, "headers"> & {
+//   headers?: Record<string, string>;
+//   auth?: boolean;
+//   timeoutMs?: number;  // default 75s
+// };
+
+// function pickMessage(body: unknown, fallback: string) {
+//   if (!body || typeof body !== "object") return fallback;
+//   const b = body as Record<string, unknown>;
+//   if (typeof b.detail === "string") return b.detail;
+//   if (typeof b.message === "string") return b.message;
+//   const first = Object.values(b)[0]; // field errors, e.g. { email: ["Already in use"] }
+//   if (Array.isArray(first) && typeof first[0] === "string") return first[0];
+//   if (typeof first === "string") return first;
+//   return fallback;
+// }
+
+// export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
+//   const { auth = true, timeoutMs = 75_000, headers, ...rest } = init;
+//   const token = auth ? getAccessToken() : null;
+
+//   const controller = new AbortController();
+//   const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+//   let res: Response;
+//   try {
+//     res = await fetch(`${BASE}${path}`, {
+//       ...rest,
+//       signal: controller.signal,
+//       headers: {
+//         "Content-Type": "application/json",
+//         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+//         ...headers,
+//       },
+//     });
+//   } catch (e) {
+//     throw new ApiError(
+//       0,
+//       (e as Error).name === "AbortError"
+//         ? "The server took too long to respond. Please try again."
+//         : "Couldn't reach the server. Check your connection and try again.",
+//     );
+//   } finally {
+//     clearTimeout(timer);
+//   }
 
 //   if (!res.ok) {
-//     let body: { message?: string } | null = null;
+//     let body: unknown = null;
 //     try { body = await res.json(); } catch {}
-//     throw new ApiError(res.status, body?.message ?? res.statusText, body);
+//     throw new ApiError(res.status, pickMessage(body, `Request failed (${res.status})`), body);
 //   }
-//   return res.status === 204 ? (undefined as T) : res.json();
+//   return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
 // }
 
 
 
-import { getAccessToken } from "./auth-storage";
+
+import { clearSession, getAccessToken, loadSession, saveSession } from "./auth-storage";
 
 const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
 
@@ -35,32 +78,41 @@ export class ApiError extends Error {
 
 type ApiInit = Omit<RequestInit, "headers"> & {
   headers?: Record<string, string>;
-  auth?: boolean;      // attach the bearer token (default true)
-  timeoutMs?: number;  // default 75s, enough for a cold start
+  auth?: boolean;
+  timeoutMs?: number;
 };
 
 function pickMessage(body: unknown, fallback: string) {
-  if (!body || typeof body !== "object") return fallback;
-  const b = body as Record<string, unknown>;
-  if (typeof b.detail === "string") return b.detail;
-  if (typeof b.message === "string") return b.message;
-  const first = Object.values(b)[0]; // field errors, e.g. { email: ["Already in use"] }
-  if (Array.isArray(first) && typeof first[0] === "string") return first[0];
-  if (typeof first === "string") return first;
+  const root = (body ?? {}) as Record<string, any>;
+  const e = (root.error ?? root) as Record<string, any>;
+
+  // Field errors first, e.g. { details: { code: ["Invalid or expired code."] } }
+  const details = e?.details;
+  if (details && typeof details === "object") {
+    for (const [field, val] of Object.entries(details)) {
+      const msg = Array.isArray(val) ? val[0] : val;
+      if (typeof msg === "string" && msg) {
+        return field === "non_field_errors" ? msg : `${field.replace(/_/g, " ")}: ${msg}`;
+      }
+    }
+  }
+  if (typeof e?.message === "string" && e.message && e.message !== "error") return e.message;
+  if (typeof root.detail === "string") return root.detail;
   return fallback;
 }
 
-export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
-  const { auth = true, timeoutMs = 75_000, headers, ...rest } = init;
-  const token = auth ? getAccessToken() : null;
-
+async function send(
+  path: string,
+  init: Omit<RequestInit, "headers">,
+  headers: Record<string, string> | undefined,
+  token: string | null,
+  timeoutMs: number,
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, {
-      ...rest,
+    return await fetch(`${BASE}${path}`, {
+      ...init,
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
@@ -78,11 +130,54 @@ export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// One refresh at a time, even if several requests hit 401 together.
+let refreshing: Promise<string | null> | null = null;
+
+async function doRefresh(refresh: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE}/api/v1/auth/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.access) return null;
+    const session = loadSession();
+    if (session) saveSession({ ...session, access: data.access, refresh: data.refresh ?? session.refresh });
+    return data.access as string;
+  } catch {
+    return null;
+  }
+}
+
+function refreshAccessToken(): Promise<string | null> {
+  const refresh = loadSession()?.refresh;
+  if (!refresh) return Promise.resolve(null);
+  if (!refreshing) refreshing = doRefresh(refresh).finally(() => { refreshing = null; });
+  return refreshing;
+}
+
+export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
+  const { auth = true, timeoutMs = 75_000, headers, ...rest } = init;
+
+  let res = await send(path, rest, headers, auth ? getAccessToken() : null, timeoutMs);
+
+  if (res.status === 401 && auth) {
+    const fresh = await refreshAccessToken();
+    if (fresh) res = await send(path, rest, headers, fresh, timeoutMs);
+    else clearSession(); // refresh failed too, so the session is over
+  }
 
   if (!res.ok) {
     let body: unknown = null;
-    try { body = await res.json(); } catch {} // HTML error pages land here
+    try { body = await res.json(); } catch {}
     throw new ApiError(res.status, pickMessage(body, `Request failed (${res.status})`), body);
   }
-  return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+  // return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+    if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }

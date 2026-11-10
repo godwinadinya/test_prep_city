@@ -70,7 +70,6 @@
 
 
 
-
 "use client";
 
 import Link from "next/link";
@@ -100,16 +99,16 @@ export default function LoginPage() {
     const slowTimer = setTimeout(() => setSlow(true), 4000);
     try {
       const session = await loginWithPassword(id.includes("@") ? id.toLowerCase() : id, password);
-      const role = session.user.role;
+      const role = String(session.user.role ?? "").toLowerCase().replace(/[\s-]+/g, "_");
+
       if (role === "super_admin") {
-        login("super_admin"); // keeps the existing route guards working for now
-        router.push("/admin");
+        router.push("/admin"); // the admin layout checks the real session, so no store call is needed
       } else if (role === "student") {
-        login("student");
+        login("student"); // keeps the student side working until it moves off the old store
         router.push("/app");
       } else {
         clearSession();
-        setError("This account type can't sign in here yet.");
+        setError(`Signed in, but the role "${session.user.role}" isn't supported on this page yet.`);
       }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
@@ -129,11 +128,24 @@ export default function LoginPage() {
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="identifier" className="mb-1 block text-sm font-semibold">Email or phone</label>
-          <input id="identifier" className="field" value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" />
+          <input
+            id="identifier"
+            className="field"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            autoComplete="username"
+          />
         </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-semibold">Password</label>
-          <input id="password" type="password" className="field" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+          <input
+            id="password"
+            type="password"
+            className="field"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+          />
         </div>
         <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
           {loading ? "Signing in…" : "Log in"}

@@ -6,6 +6,31 @@ export const AUTH = {
   login: "/api/v1/auth/login/",           // for students and super admin
   loginOtp: "/api/v1/auth/login/otp/",
   register: "/api/v1/auth/register/",
+    otpRequest: "/api/v1/auth/otp/request/",
+
+};
+
+export async function requestRegisterOtp(identifier: string) {
+  await api(AUTH.otpRequest, {
+    method: "POST",
+    auth: false,
+    body: JSON.stringify({ identifier, purpose: "register" }),
+  });
+}
+
+export type RegisterInput = {
+  identifier: string;
+  code: string;
+  name: string;
+  dateOfBirth: string;
+  state: string;
+  school: string;
+  examYear: number;
+  password: string;
+  acceptTerms: boolean;
+  marketingOptIn: boolean;
+  guardianName?: string;
+  guardianContact?: string;
 };
 
 function toSession(data: any, identifier?: string): Session {
@@ -39,24 +64,35 @@ export async function loginWithPassword(identifier: string, password: string) {
   return session;
 }
 
-export async function registerStudent(input: {
-  name: string; email: string; phone: string; password: string;
-  dateOfBirth: string; guardianEmail: string; guardianConsent: boolean;
-}) {
-
-    const data = await api<unknown>(AUTH.register, {
+export async function registerStudent(i: RegisterInput): Promise<{ signedIn: boolean }> {
+  const data = await api<unknown>(AUTH.register, {
     method: "POST",
     auth: false,
     body: JSON.stringify({
-      full_name: input.name,
-      email: input.email,
-      phone: input.phone || undefined,
-      password: input.password,
-      date_of_birth: input.dateOfBirth || undefined,
-      guardian_email: input.guardianEmail || undefined,
-      guardian_consent: input.guardianConsent,
+      identifier: i.identifier,
+      code: i.code,
+      name: i.name,
+      date_of_birth: i.dateOfBirth,
+      state: i.state,
+      school: i.school,
+      exam_year: i.examYear,
+      password: i.password,
+      accept_terms: i.acceptTerms,
+      marketing_opt_in: i.marketingOptIn,
+      guardian_name: i.guardianName ?? "",
+      guardian_contact: i.guardianContact ?? "",
     }),
   });
-  try { saveSession(toSession(data)); } catch {}
-  return data;
+
+  // If register returns tokens, use them. Otherwise try a normal login.
+  try {
+    saveSession(toSession(data, i.identifier));
+    return { signedIn: true };
+  } catch {}
+  try {
+    await loginWithPassword(i.identifier, i.password);
+    return { signedIn: true };
+  } catch {
+    return { signedIn: false }; // e.g. a minor still waiting for guardian consent
+  }
 }
