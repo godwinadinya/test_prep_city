@@ -94,8 +94,8 @@ const CARDS: { label: string; value: (o: AdminOverview) => string; note?: (o: Ad
 ];
 
 // Health is public, so no token. Resolves true on any 2xx, throws on 503.
-const healthFetcher = (path: string) => api<unknown>(path, { auth: false }).then(() => true);
-
+// const healthFetcher = (path: string) => api<unknown>(path, { auth: false }).then(() => true);
+const healthFetcher = (path: string) => api<unknown>(path, { auth: false, silent: true }).then(() => true);
 function Dot({ tone }: { tone: "ok" | "warn" | "bad" | "idle" }) {
   const color = { ok: "bg-green-500", warn: "bg-amber-400", bad: "bg-red-500", idle: "bg-neutral-300" }[tone];
   return <span aria-hidden className={`mt-1.5 inline-block h-3 w-3 shrink-0 rounded-full ${color}`} />;

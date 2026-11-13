@@ -79,6 +79,7 @@ import { useStore } from "@/lib/store";
 import { loginWithPassword } from "@/lib/auth";
 import { clearSession } from "@/lib/auth-storage";
 import { ApiError } from "@/lib/api";
+import { LoadingButton } from "@/components/loading";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -87,7 +88,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [slow, setSlow] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,15 +96,14 @@ export default function LoginPage() {
     if (!id || !password) return setError("Enter your email or phone and your password.");
 
     setLoading(true);
-    const slowTimer = setTimeout(() => setSlow(true), 4000);
     try {
       const session = await loginWithPassword(id.includes("@") ? id.toLowerCase() : id, password);
       const role = String(session.user.role ?? "").toLowerCase().replace(/[\s-]+/g, "_");
 
       if (role === "super_admin") {
-        router.push("/admin"); // the admin layout checks the real session, so no store call is needed
+        router.push("/admin");
       } else if (role === "student") {
-        login("student"); // keeps the student side working until it moves off the old store
+        login("student");
         router.push("/app");
       } else {
         clearSession();
@@ -113,8 +112,6 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
-      clearTimeout(slowTimer);
-      setSlow(false);
       setLoading(false);
     }
   }
@@ -128,33 +125,15 @@ export default function LoginPage() {
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="identifier" className="mb-1 block text-sm font-semibold">Email or phone</label>
-          <input
-            id="identifier"
-            className="field"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            autoComplete="username"
-          />
+          <input id="identifier" className="field" value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" />
         </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-semibold">Password</label>
-          <input
-            id="password"
-            type="password"
-            className="field"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
+          <input id="password" type="password" className="field" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         </div>
-        <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
-          {loading ? "Signing in…" : "Log in"}
-        </button>
-        {slow ? (
-          <p className="text-sm text-neutral-600 dark:text-white/70" role="status">
-            Waking up the server. The first sign-in can take up to a minute.
-          </p>
-        ) : null}
+        <LoadingButton type="submit" loading={loading} loadingText="Signing in…" className="btn-primary w-full">
+          Log in
+        </LoadingButton>
       </form>
       <p className="mt-6 text-sm text-neutral-600 dark:text-white/70">
         New here? <Link href="/signup" className="font-semibold underline">Create a free account</Link>

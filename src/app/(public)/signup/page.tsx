@@ -218,6 +218,7 @@ import { useStore } from "@/lib/store";
 import { registerStudent, requestRegisterOtp } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { NIGERIAN_STATES } from "@/data/states";
+import { LoadingButton } from "@/components/loading";
 
 const isEmail = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
 const isPhone = (v: string) => /^\+?\d{10,14}$/.test(v);
@@ -368,9 +369,11 @@ export default function SignupPage() {
             />
             <p className="mt-1 text-xs text-neutral-500 dark:text-white/60">We&apos;ll send you a code to verify it.</p>
           </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
+          {/* <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
             {loading ? "Sending code…" : "Send code"}
-          </button>
+          </button> */}
+          <LoadingButton type="submit" loading={loading} loadingText="Sending code…" className="btn-primary w-full">Send code</LoadingButton>
+
           {loading ? (
             <p className="text-xs text-neutral-500 dark:text-white/60">The first request can take up to a minute while the server wakes up.</p>
           ) : null}
@@ -457,9 +460,10 @@ export default function SignupPage() {
             <span>Send me study tips and offers (optional).</span>
           </label>
 
-          <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
+          {/* <button type="submit" disabled={loading} className="btn-primary w-full disabled:opacity-60">
             {loading ? "Creating account…" : "Create account"}
-          </button>
+          </button> */}
+          <LoadingButton type="submit" loading={loading} loadingText="Creating account…" className="btn-primary w-full">Create account</LoadingButton>
         </form>
       )}
 

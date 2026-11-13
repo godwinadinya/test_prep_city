@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { StoreProvider } from "@/lib/store";
 import { Toast } from "@/components/ui";
 import "./globals.css";
+import { GlobalLoadingBar } from "@/components/global-loading-bar";
 
 export const metadata: Metadata = {
   title: "Test Prep City — Score your target. See the proof.",
@@ -35,6 +36,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to main content
         </a>
+          <GlobalLoadingBar />
+
         <StoreProvider>
           {children}
           <Toast />

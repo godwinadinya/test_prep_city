@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { ApiError } from "@/lib/api";
+import { Spinner } from "@/components/loading";
+
 
 export function DataState(props: {
   loading: boolean;
@@ -11,13 +13,13 @@ export function DataState(props: {
 }) {
   const { loading, error, empty, emptyText = "Nothing here yet.", onRetry, children } = props;
 
-  if (loading) {
-    return (
-      <p className="text-sm text-neutral-500 dark:text-white/60">
-        Loading… The first load can take up to a minute if the server is asleep.
-      </p>
-    );
-  }
+ if (loading) {
+  return (
+    <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-white/60">
+      <Spinner size={16} /> Loading…
+    </div>
+  );
+}
   if (error) {
     return (
       <div>

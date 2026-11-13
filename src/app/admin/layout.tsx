@@ -108,6 +108,7 @@ import { useEffect, type ReactNode } from "react";
 import { ThemeToggle } from "@/components/ui";
 import { signOut, useAuth } from "@/lib/use-auth";
 import { AdminProviders } from "./providers";
+import { PageLoader } from "@/components/loading";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: "📊" },
@@ -147,9 +148,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (auth.status !== "authed" || auth.user?.role !== "super_admin") {
-    return <div className="grid min-h-screen place-items-center text-sm text-neutral-500">Loading admin…</div>;
-  }
+if (auth.status !== "authed" || auth.user?.role !== "super_admin") {
+  return <PageLoader fullScreen label="Loading admin…" />;
+}
 
   const label = auth.user.name?.trim() || auth.user.email || "";
 
