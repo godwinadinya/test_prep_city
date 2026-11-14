@@ -1,4 +1,4 @@
-
+import { requestFinished, requestStarted } from "./api-activity";
 import { clearSession, getAccessToken, loadSession, saveSession } from "./auth-storage";
 
 const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
@@ -14,15 +14,16 @@ export const errorMessage = (e: unknown) =>
 
 type ApiInit = Omit<RequestInit, "headers"> & {
   headers?: Record<string, string>;
-  auth?: boolean;
-  timeoutMs?: number;
+  auth?: boolean;      // attach the bearer token (default true)
+  timeoutMs?: number;  // default 75s, enough for a cold start
+  silent?: boolean;    // skip the global loading bar (for background polling)
 };
 
+// The API wraps errors as { error: { code, message, details } }.
 function pickMessage(body: unknown, fallback: string) {
   const root = (body ?? {}) as Record<string, any>;
   const e = (root.error ?? root) as Record<string, any>;
 
-  // Field errors first, e.g. { details: { code: ["Invalid or expired code."] } }
   const details = e?.details;
   if (details && typeof details === "object") {
     for (const [field, val] of Object.entries(details)) {
@@ -46,12 +47,13 @@ async function send(
 ): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const isForm = typeof FormData !== "undefined" && init.body instanceof FormData; // the browser sets the boundary itself
   try {
     return await fetch(`${BASE}${path}`, {
       ...init,
       signal: controller.signal,
       headers: {
-        "Content-Type": "application/json",
+        ...(isForm ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
@@ -97,23 +99,26 @@ function refreshAccessToken(): Promise<string | null> {
 }
 
 export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
-  const { auth = true, timeoutMs = 75_000, headers, ...rest } = init;
+  const { auth = true, timeoutMs = 75_000, silent = false, headers, ...rest } = init;
+  if (!silent) requestStarted();
+  try {
+    let res = await send(path, rest, headers, auth ? getAccessToken() : null, timeoutMs);
 
-  let res = await send(path, rest, headers, auth ? getAccessToken() : null, timeoutMs);
+    if (res.status === 401 && auth) {
+      const fresh = await refreshAccessToken();
+      if (fresh) res = await send(path, rest, headers, fresh, timeoutMs);
+      else clearSession(); // refresh failed too, so the session is over
+    }
 
-  if (res.status === 401 && auth) {
-    const fresh = await refreshAccessToken();
-    if (fresh) res = await send(path, rest, headers, fresh, timeoutMs);
-    else clearSession(); // refresh failed too, so the session is over
-  }
-
-  if (!res.ok) {
-    let body: unknown = null;
-    try { body = await res.json(); } catch {}
-    throw new ApiError(res.status, pickMessage(body, `Request failed (${res.status})`), body);
-  }
-  // return res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+    if (!res.ok) {
+      let body: unknown = null;
+      try { body = await res.json(); } catch {}
+      throw new ApiError(res.status, pickMessage(body, `Request failed (${res.status})`), body);
+    }
     if (res.status === 204) return undefined as T;
-  const text = await res.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
+  } finally {
+    if (!silent) requestFinished();
+  }
 }

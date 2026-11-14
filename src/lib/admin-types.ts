@@ -149,3 +149,74 @@ export type IntegrityFlag = {
   reviewed_by: string | null;
   created_at: string;
 };
+
+
+export type Subject = {
+  id: string;
+  code: string;
+  name: string;
+  is_compulsory: boolean;
+  is_active: boolean;
+  calculator_permitted: boolean;
+  sort_order: number;
+  track: string;
+};
+
+export type Topic = {
+  id: string;
+  title: string;
+  syllabus_ref: string;
+  sort_order: number;
+  is_active: boolean;
+  subject: string;
+};
+
+export type LessonStatus = "draft" | "published" | "archived";
+
+export type Lesson = {
+  id: string;
+  title: string;
+  summary: string;
+  duration_seconds: number;
+  status: LessonStatus;
+  is_free_sample: boolean;
+  sort_order: number;
+  published_at: string | null;
+  topic: string;
+  subtopic: string | null;
+};
+
+export type QuestionStatus = "draft" | "in_review" | "approved" | "retired";
+export type Difficulty = "easy" | "medium" | "hard";
+
+export type Question = {
+  id: string;
+  topic_id: string;
+  stem: string;
+  hint: string;
+  explanation: string;
+  difficulty: Difficulty;
+  correct_label: string;
+  status: QuestionStatus;
+  version: number;
+  source: string;
+  options: { label: string; text: string }[];
+  author: string | null;
+  reviewer: string | null;
+  approver: string | null;
+  approved_at: string | null;
+  times_answered: number;
+  times_correct: number;
+  report_count: number;
+  created_at: string;
+};
+
+export type FreeEvent = {
+  id: string;
+  title: string;
+  description: string;
+  starts_at: string;
+  location: string;
+  link: string;
+  is_published: boolean;
+};
