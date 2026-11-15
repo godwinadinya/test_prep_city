@@ -220,3 +220,32 @@ export type FreeEvent = {
   link: string;
   is_published: boolean;
 };
+
+export type ExamTemplate = {
+  id: string;
+  name: string;
+  kind: "full_mock" | "single_subject" | "diagnostic";
+  duration_minutes: number;
+  max_score: number;
+  is_active: boolean;
+};
+
+export type ExamSection = {
+  id: string;
+  order: number;
+  question_count: number;
+  template: string;
+  subject: string | null;
+};
+
+export type CourseRef = { id: string; name: string };
+export type InstitutionRef = { id: string; name: string; short_name: string };
+export type CourseRequirement = { id: string; course: string; subject: string };
+
+export type CourseCutoff = {
+  id: string;
+  year: number;
+  cutoff_score: number;
+  course: string;
+  institution: string;
+};
