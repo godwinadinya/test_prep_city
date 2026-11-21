@@ -249,3 +249,39 @@ export type CourseCutoff = {
   course: string;
   institution: string;
 };
+
+export type NotificationTemplate = {
+  id: string;
+  code: string;
+  category: string;
+  title: string;
+  body: string;
+  sms_body: string;
+  default_channels: unknown; // a list of channel names
+  is_active: boolean;
+};
+
+export type Campaign = {
+  id: string;
+  name: string;
+  segment: unknown;
+  channels: unknown; // a list of channel names
+  status: string;
+  sent_count: number;
+  template: string;
+  created_at: string;
+};
+
+export type AuditLog = {
+  id: string;
+  created_at: string;
+  actor_role: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  changes: unknown;
+  meta: unknown;
+  ip_address: string | null;
+  user_agent: string;
+  actor: string | null;
+};
